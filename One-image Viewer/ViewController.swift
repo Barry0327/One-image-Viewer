@@ -14,7 +14,7 @@ class ViewController: UIViewController, UIScrollViewDelegate, UIImagePickerContr
 
         let scrollView = UIScrollView()
 
-        scrollView.frame = CGRect(x: 0, y: 0, width: 375, height: 590)
+//        scrollView.frame = CGRect(x: 0, y: 0, width: 375, height: 590)
 
         scrollView.contentSize = CGSize.init(width: 2000.0, height: 2000.0)
 
@@ -23,6 +23,8 @@ class ViewController: UIViewController, UIScrollViewDelegate, UIImagePickerContr
         scrollView.maximumZoomScale = 4.0
 
         scrollView.zoomScale = 1.0
+
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
 
         return scrollView
     }()
@@ -49,11 +51,11 @@ class ViewController: UIViewController, UIScrollViewDelegate, UIImagePickerContr
 
         let view = UIView()
 
-        view.frame = CGRect(x: 0, y: 590, width: 375, height: 77)
-
         view.backgroundColor = UIColor(red: 249/255, green: 223/255, blue: 23/255, alpha: 1)
 
         view.layer.applySketchShadow(color: .black, alpha: 0.5, xPosition: 0, yPosition: 0, blur: 10, spread: 0)
+
+        view.translatesAutoresizingMaskIntoConstraints = false
 
         return view
 
@@ -62,8 +64,6 @@ class ViewController: UIViewController, UIScrollViewDelegate, UIImagePickerContr
     var pickImageButton: UIButton = {
 
         let button = UIButton()
-
-        button.frame = CGRect(x: 98, y: 17, width: 180, height: 44)
 
         button.layer.cornerRadius = 2.0
 
@@ -86,25 +86,27 @@ class ViewController: UIViewController, UIScrollViewDelegate, UIImagePickerContr
 
         button.setAttributedTitle(attributedString, for: .normal)
 
+        button.translatesAutoresizingMaskIntoConstraints = false
+
+
         return button
 
     }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
 
         myScrollView.delegate = self
 
         view.addSubview(bottomView)
 
-        myScrollView.addSubview(placeHolderImageView)
+        view.addSubview(placeHolderImageView)
 
-        bottomView.addSubview(pickImageButton)
-
-//        placeHolderImageView.image = UIImage(named: "image-landing")
+        view.addSubview(pickImageButton)
 
         view.addSubview(myScrollView)
+
+        self.setUpAutoLayout()
     }
 
     func viewForZooming(in: UIScrollView) -> UIView? {
@@ -137,6 +139,45 @@ class ViewController: UIViewController, UIScrollViewDelegate, UIImagePickerContr
             self.present(imagePicker, animated: true, completion: nil)
 
         }
+    }
+
+    func setUpAutoLayout() {
+
+        myScrollView.topAnchor.constraint(equalTo: view.topAnchor, constant: 0).isActive = true
+
+        myScrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -77).isActive = true
+
+        myScrollView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 0).isActive = true
+
+        myScrollView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: 0).isActive = true
+
+
+        bottomView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0).isActive = true
+
+        bottomView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 0).isActive = true
+
+        bottomView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: 0).isActive = true
+
+        bottomView.heightAnchor.constraint(equalToConstant: 77).isActive = true
+
+
+
+        placeHolderImageView.topAnchor.constraint(equalTo: view.topAnchor, constant: 0).isActive = true
+
+        placeHolderImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -77).isActive = true
+
+        placeHolderImageView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: 0).isActive = true
+
+        placeHolderImageView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 0).isActive = true
+
+        pickImageButton.bottomAnchor.constraint(equalTo: bottomView.bottomAnchor, constant: -16).isActive = true
+
+        pickImageButton.leadingAnchor.constraint(equalTo: bottomView.leadingAnchor, constant: 98).isActive = true
+
+        pickImageButton.trailingAnchor.constraint(equalTo: bottomView.trailingAnchor, constant: -97).isActive = true
+
+        pickImageButton.topAnchor.constraint(equalTo: bottomView.topAnchor, constant: 17).isActive = true
+
     }
 }
 
