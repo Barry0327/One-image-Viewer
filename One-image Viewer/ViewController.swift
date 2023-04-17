@@ -57,6 +57,16 @@ class ViewController: UIViewController {
         return button
     }()
 
+	private lazy var safeAreaPadding: UIEdgeInsets = {
+		UIApplication.shared.windows.first?.safeAreaInsets ?? .zero
+	}()
+
+	private var isStatusBarHidden: Bool = false
+
+	override var prefersStatusBarHidden: Bool {
+		isStatusBarHidden
+	}
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -90,12 +100,11 @@ class ViewController: UIViewController {
 			scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
 		])
 
-		let safeAreaPadding = UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
 		NSLayoutConstraint.activate([
 			bottomView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 0),
 			bottomView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: 0),
 			bottomView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-			bottomView.heightAnchor.constraint(equalToConstant: 77 + safeAreaPadding)
+			bottomView.heightAnchor.constraint(equalToConstant: 77 + safeAreaPadding.top)
 		])
 
 		NSLayoutConstraint.activate([
@@ -124,6 +133,12 @@ class ViewController: UIViewController {
 		present(alert, animated: true, completion: nil)
 	}
 
+	private func updateStatusBarHiddenState(_ shouldHide: Bool) {
+		guard isStatusBarHidden != shouldHide else { return }
+		isStatusBarHidden = shouldHide
+		setNeedsStatusBarAppearanceUpdate()
+	}
+
 	@objc func pickImage() {
 		if UIImagePickerController.isSourceTypeAvailable(.photoLibrary) {
 			let imagePicker = UIImagePickerController()
@@ -143,6 +158,9 @@ extension ViewController: UIScrollViewDelegate {
 		let offsetX = max((scrollView.bounds.width - scrollView.contentSize.width) * 0.5, 0.0)
 		let offsetY = max((scrollView.bounds.height - scrollView.contentSize.height) * 0.5, 0.0)
 		scrollView.contentInset = .init(top: offsetY, left: offsetX, bottom: 0.0, right: 0.0)
+
+		let shouldHideStatusBar = offsetY <= safeAreaPadding.top
+		updateStatusBarHiddenState(shouldHideStatusBar)
 	}
 }
 
