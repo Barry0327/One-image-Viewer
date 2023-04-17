@@ -8,73 +8,41 @@
 
 import UIKit
 
-class ViewController: UIViewController, UIScrollViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class ViewController: UIViewController {
 
-    var myScrollView: UIScrollView = {
-
+    private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
-
-//        scrollView.frame = CGRect(x: 0, y: 0, width: 375, height: 590)
-
-        scrollView.contentSize = CGSize.init(width: 2000.0, height: 2000.0)
-
         scrollView.minimumZoomScale = 1.0
-
-        scrollView.maximumZoomScale = 4.0
-
+        scrollView.maximumZoomScale = 2.0
         scrollView.zoomScale = 1.0
-
+		scrollView.contentSize = contentImageView.bounds.size
         scrollView.translatesAutoresizingMaskIntoConstraints = false
-
+		scrollView.delegate = self
         return scrollView
     }()
 
-    var placeHolderImageView: UIImageView = {
-
+    let contentImageView: UIImageView = {
         let imageView = UIImageView()
-
-        imageView.contentMode = .center
-
         imageView.backgroundColor = UIColor(red: 43/255, green: 43/255, blue: 43/255, alpha: 1)
-
-        imageView.tintColor = .white
-
-        imageView.image = UIImage(named: "icon_photo")
-
-        imageView.frame = CGRect(x: 0, y: 0, width: 375, height: 590)
-
+		imageView.contentMode = .scaleAspectFit
         return imageView
-
     }()
 
     var bottomView: UIView = {
-
         let view = UIView()
-
         view.backgroundColor = UIColor(red: 249/255, green: 223/255, blue: 23/255, alpha: 1)
-
         view.layer.applySketchShadow(color: .black, alpha: 0.5, xPosition: 0, yPosition: 0, blur: 10, spread: 0)
-
         view.translatesAutoresizingMaskIntoConstraints = false
-
         return view
-
     }()
 
-    var pickImageButton: UIButton = {
-
+    private lazy var pickImageButton: UIButton = {
         let button = UIButton()
-
         button.layer.cornerRadius = 2.0
-
         button.backgroundColor = UIColor(red: 43/255, green: 43/255, blue: 43/255, alpha: 1)
-
         button.layer.applySketchShadow(color: .black, alpha: 0.26, xPosition: 0, yPosition: 2, blur: 4, spread: 0)
-
         button.setTitle("Pick an Image", for: .normal)
-
         button.setTitleColor(.white, for: .normal)
-
         button.addTarget(self, action: #selector(pickImage), for: .touchUpInside)
 
         let textAttributes = [
@@ -85,100 +53,113 @@ class ViewController: UIViewController, UIScrollViewDelegate, UIImagePickerContr
         let attributedString = NSAttributedString.init(string: "Pick an Image", attributes: textAttributes as [NSAttributedString.Key : Any])
 
         button.setAttributedTitle(attributedString, for: .normal)
-
         button.translatesAutoresizingMaskIntoConstraints = false
-
-
         return button
-
     }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        myScrollView.delegate = self
-
-        view.addSubview(bottomView)
-
-        view.addSubview(placeHolderImageView)
-
-        view.addSubview(pickImageButton)
-
-        view.addSubview(myScrollView)
-
-        self.setUpAutoLayout()
+		view.backgroundColor = UIColor(red: 43/255, green: 43/255, blue: 43/255, alpha: 1)
+		constructViewHierarchy()
+        activateConstraints()
     }
 
-    func viewForZooming(in: UIScrollView) -> UIView? {
+	private func updateMinimumZoomScaleForSize() {
+		let scrollViewSize = scrollView.bounds.size
+		let widthScale = scrollViewSize.width / contentImageView.bounds.width
+		let heightScale = scrollViewSize.height / contentImageView.bounds.height
+		let minimumScale = min(widthScale, heightScale)
 
-        return self.placeHolderImageView
+		scrollView.minimumZoomScale = minimumScale
+		scrollView.zoomScale = minimumScale
+		print("zoom scale updated: ", minimumScale)
+	}
 
+	private func constructViewHierarchy() {
+		scrollView.addSubview(contentImageView)
+		view.addSubview(scrollView)
+		bottomView.addSubview(pickImageButton)
+		view.addSubview(bottomView)
+	}
+
+    private func activateConstraints() {
+		NSLayoutConstraint.activate([
+			scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+			scrollView.bottomAnchor.constraint(equalTo: bottomView.topAnchor),
+			scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+			scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+		])
+
+		let safeAreaPadding = UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
+		NSLayoutConstraint.activate([
+			bottomView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 0),
+			bottomView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: 0),
+			bottomView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+			bottomView.heightAnchor.constraint(equalToConstant: 77 + safeAreaPadding)
+		])
+
+		NSLayoutConstraint.activate([
+			pickImageButton.leadingAnchor.constraint(equalTo: bottomView.leadingAnchor, constant: 98),
+			pickImageButton.trailingAnchor.constraint(equalTo: bottomView.trailingAnchor, constant: -98),
+			pickImageButton.heightAnchor.constraint(equalToConstant: 45),
+			pickImageButton.topAnchor.constraint(equalTo: bottomView.topAnchor, constant: 16)
+		])
     }
 
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+	private func presentErrorAlert() {
+		let alert = UIAlertController(
+			title: "Can't use this image",
+			message: "Please choose another one",
+			preferredStyle: .alert
+		)
 
-        let image = info[UIImagePickerController.InfoKey.originalImage] as! UIImage
+		let ok = UIAlertAction(
+			title: "OK",
+			style: .cancel,
+			handler: nil
+		)
 
-        self.placeHolderImageView.image = image
+		alert.addAction(ok)
 
-        self.placeHolderImageView.contentMode = .scaleAspectFit
+		present(alert, animated: true, completion: nil)
+	}
 
-        self.dismiss(animated: true, completion: nil)
-    }
+	@objc func pickImage() {
+		if UIImagePickerController.isSourceTypeAvailable(.photoLibrary) {
+			let imagePicker = UIImagePickerController()
+			imagePicker.delegate = self
+			imagePicker.sourceType = .photoLibrary
+			present(imagePicker, animated: true, completion: nil)
+		}
+	}
+}
 
-    @objc func pickImage() {
+extension ViewController: UIScrollViewDelegate {
+	func viewForZooming(in: UIScrollView) -> UIView? {
+		return contentImageView
+	}
 
-        if UIImagePickerController.isSourceTypeAvailable(.photoLibrary) {
+	func scrollViewDidZoom(_ scrollView: UIScrollView) {
+		let offsetX = max((scrollView.bounds.width - scrollView.contentSize.width) * 0.5, 0.0)
+		let offsetY = max((scrollView.bounds.height - scrollView.contentSize.height) * 0.5, 0.0)
+		scrollView.contentInset = .init(top: offsetY, left: offsetX, bottom: 0.0, right: 0.0)
+		print("scroll view content inset updated: ", scrollView.contentInset, "content size: ", scrollView.contentSize)
+	}
+}
 
-            let imagePicker = UIImagePickerController()
+extension ViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+	func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+		dismiss(animated: true, completion: nil)
 
-            imagePicker.delegate = self
-
-            imagePicker.sourceType = .photoLibrary
-
-            self.present(imagePicker, animated: true, completion: nil)
-
-        }
-    }
-
-    func setUpAutoLayout() {
-
-        myScrollView.topAnchor.constraint(equalTo: view.topAnchor, constant: 0).isActive = true
-
-        myScrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -77).isActive = true
-
-        myScrollView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 0).isActive = true
-
-        myScrollView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: 0).isActive = true
-
-
-        bottomView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0).isActive = true
-
-        bottomView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 0).isActive = true
-
-        bottomView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: 0).isActive = true
-
-        bottomView.heightAnchor.constraint(equalToConstant: 77).isActive = true
-
-
-
-        placeHolderImageView.topAnchor.constraint(equalTo: view.topAnchor, constant: 0).isActive = true
-
-        placeHolderImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -77).isActive = true
-
-        placeHolderImageView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: 0).isActive = true
-
-        placeHolderImageView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 0).isActive = true
-
-        pickImageButton.bottomAnchor.constraint(equalTo: bottomView.bottomAnchor, constant: -16).isActive = true
-
-        pickImageButton.leadingAnchor.constraint(equalTo: bottomView.leadingAnchor, constant: 98).isActive = true
-
-        pickImageButton.trailingAnchor.constraint(equalTo: bottomView.trailingAnchor, constant: -97).isActive = true
-
-        pickImageButton.topAnchor.constraint(equalTo: bottomView.topAnchor, constant: 17).isActive = true
-
-    }
+		guard let image = info[UIImagePickerController.InfoKey.originalImage] as? UIImage else {
+			presentErrorAlert()
+			return
+		}
+		contentImageView.image = image
+		contentImageView.frame = .init(origin: .zero, size: image.size)
+		updateMinimumZoomScaleForSize()
+	}
 }
 
 extension CALayer {
