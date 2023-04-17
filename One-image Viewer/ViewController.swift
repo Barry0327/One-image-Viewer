@@ -73,7 +73,6 @@ class ViewController: UIViewController {
 
 		scrollView.minimumZoomScale = minimumScale
 		scrollView.zoomScale = minimumScale
-		print("zoom scale updated: ", minimumScale)
 	}
 
 	private func constructViewHierarchy() {
@@ -144,7 +143,6 @@ extension ViewController: UIScrollViewDelegate {
 		let offsetX = max((scrollView.bounds.width - scrollView.contentSize.width) * 0.5, 0.0)
 		let offsetY = max((scrollView.bounds.height - scrollView.contentSize.height) * 0.5, 0.0)
 		scrollView.contentInset = .init(top: offsetY, left: offsetX, bottom: 0.0, right: 0.0)
-		print("scroll view content inset updated: ", scrollView.contentInset, "content size: ", scrollView.contentSize)
 	}
 }
 
